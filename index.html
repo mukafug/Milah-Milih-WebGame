@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milah-Milih Sampah (Definitive)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1e2021;
+            --primary-color: #2a2c2e;
+            --secondary-color: #3f4245;
+            --accent-color: #4CAF50;
+            --highlight-color: #FFC107;
+            --font-color: #e8e6e3;
+            --danger-color: #f44336;
+            
+            --bin-height: 110px;
+
+            --guideline-organik: rgba(76, 175, 80, 0.15);
+            --guideline-anorganik: rgba(33, 150, 243, 0.15);
+            --guideline-b3: rgba(244, 67, 54, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-family: 'Press Start 2P', monospace;
+            background-color: var(--bg-color);
+            color: var(--font-color);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='10' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .page-wrapper {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .main-game-wrapper {
+            flex-grow: 1;
+            width: 70%;
+            max-width: 550px;
+            height: 90vh;
+            max-height: 850px;
+            background: var(--primary-color);
+            border-radius: 8px;
+            border: 2px solid var(--secondary-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .screen {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(42, 44, 46, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            text-align: center;
+            z-index: 200;
+            padding: 20px;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .screen.hidden { opacity: 0; pointer-events: none; }
+        .screen h1 { font-size: 2.2rem; color: var(--accent-color); margin-bottom: 20px; line-height: 1.2;}
+        .screen p { font-size: 0.9rem; line-height: 1.6; max-width: 90%; margin-bottom: 40px; }
+        .start-button, .restart-button {
+            font-family: 'Press Start 2P', monospace; font-weight: 700; font-size: 1.2rem;
+            padding: 15px 35px; border: 2px solid var(--highlight-color); border-radius: 4px;
+            background: var(--highlight-color); color: var(--bg-color); cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .start-button:hover, .restart-button:hover { filter: brightness(1.1); }
+        
+        .game-area { flex-grow: 1; position: relative; }
+        .waste {
+            position: absolute; font-size: 2.8rem;
+            text-shadow: 0 0 8px rgba(0,0,0,0.8);
+            will-change: transform; z-index: 10;
+        }
+
+        .guidelines-container {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            bottom: var(--bin-height);
+            display: flex;
+            pointer-events: none;
+        }
+        .guideline {
+            flex: 1;
+            border-right: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+        .guideline:last-child { border-right: none; }
+        #guideline-organik { background-color: var(--guideline-organik); }
+        #guideline-anorganik { background-color: var(--guideline-anorganik); }
+        #guideline-b3 { background-color: var(--guideline-b3); }
+
+        .bins-container {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: var(--bin-height); display: flex;
+            border-top: 2px solid var(--secondary-color);
+            z-index: 5;
+        }
+        
+        /* === CSS PERBAIKAN UTAMA DI SINI === */
+        .bin {
+            flex: 1; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; position: relative;
+            box-shadow: none;
+        }
+        .bin::after {
+            content: ''; position: absolute; left: 0; top: 0;
+            width: 2px; height: 100%; background: var(--secondary-color);
+        }
+        .bin:first-child::after { display: none; }
+        .bin-icon { font-size: 2.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+        .bin-label { margin-top: 10px; font-size: 0.8rem; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.7);}
+        
+        /* New multi-stop diagonal gradients for a richer look */
+        #bin-organik { background: #4CAF50; }
+        #bin-anorganik { background: #2196F3; }
+        #bin-b3 { background: #f44336; }
+        /* === AKHIR DARI PERBAIKAN CSS === */
+
+
+        .sidebar-ui {
+            width: 30%; min-width: 250px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+        .ui-panel {
+            background: var(--primary-color); border: 2px solid var(--secondary-color);
+            border-radius: 8px; overflow: hidden;
+        }
+        .ui-panel-header {
+            background-color: var(--secondary-color); padding: 8px 15px; text-align: center;
+        }
+        .ui-panel-header h3 {
+            font-size: 1rem; font-weight: 700; color: var(--highlight-color); letter-spacing: 1px;
+        }
+        .ui-panel-body { padding: 20px; text-align: center; }
+        .display { font-size: 2rem; font-weight: 700; color: var(--font-color); }
+        #next-item-preview { font-size: 4rem; min-height: 70px; line-height: 1; }
+        #next-item-name { font-size: 0.9rem; color: var(--highlight-color); font-weight: 700; margin-top: 10px; min-height: 20px; }
+        #lives-container { letter-spacing: 8px; }
+        
+        .feedback-animation {
+            position: absolute; z-index: 50; pointer-events: none; font-size: 5rem;
+            animation: explode 0.4s cubic-bezier(.68,-0.55,.27,1.55) forwards, feedback-glow 0.4s;
+            filter: drop-shadow(0 0 16px #fff8) drop-shadow(0 0 32px #fff4);
+        }
+        .correct-poof {
+            animation: poof 0.5s cubic-bezier(.68,-0.55,.27,1.55) forwards, feedback-glow 0.5s, feedback-scale 0.5s;
+            font-size: 3.5rem; color: var(--accent-color);
+            filter: drop-shadow(0 0 16px #4CAF50cc) drop-shadow(0 0 32px #4CAF5088);
+        }
+        .score-animate {
+            animation: score-bounce 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        .lives-animate {
+            animation: lives-shake 0.5s cubic-bezier(.36,.07,.19,.97);
+        }
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            font-size: 1.5rem;
+            opacity: 0.85;
+            animation: particle-fly 0.7s linear forwards;
+        }
+        @keyframes explode {
+            0% { transform: scale(0.5) rotate(0deg); opacity: 1; }
+            80% { transform: scale(1.6) rotate(20deg); opacity: 1; }
+            100% { transform: scale(1.8) rotate(-10deg); opacity: 0; }
+        }
+        @keyframes poof {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            60% { transform: scale(1.3) rotate(-10deg); opacity: 1; }
+            100% { transform: scale(0) rotate(10deg); opacity: 0; }
+        }
+        @keyframes feedback-glow {
+            0% { filter: drop-shadow(0 0 0px #fff8); }
+            50% { filter: drop-shadow(0 0 24px #fff8); }
+            100% { filter: drop-shadow(0 0 0px #fff8); }
+        }
+        @keyframes feedback-scale {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        @keyframes score-bounce {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+        @keyframes lives-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        @keyframes particle-fly {
+            0% { opacity: 1; transform: translate(0,0) scale(1); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translate(var(--tx, 0px), var(--ty, -60px)) scale(0.7); }
+        }
+
+        .game-title-static {
+            font-family: 'Press Start 2P', monospace;
+            color: #fff;
+            font-size: 1rem;
+            text-align: center;
+            margin-top: 30px;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .combo-feedback {
+            position: absolute;
+            left: 50%;
+            top: 40px;
+            transform: translateX(-50%) scale(0.7);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 2.2rem;
+            color: #fff;
+            text-shadow: 0 4px 24px #4caf50, 0 2px 8px #000a;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .combo-feedback.show {
+            opacity: 1;
+            transform: translateX(-50%) scale(1.15);
+            animation: combo-pop 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        @keyframes combo-pop {
+            0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+            40% { transform: translateX(-50%) scale(1.25); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); opacity: 0; }
+        }
+        .guideline.highlight-correct {
+            box-shadow: 0 0 24px 6px #4caf50cc, 0 0 8px 2px #fff2;
+            background: linear-gradient(to top, #4caf50 60%, transparent 100%);
+            transition: box-shadow 0.3s, background 0.3s;
+        }
+        .guideline.highlight-wrong {
+            box-shadow: 0 0 24px 6px #f44336cc, 0 0 8px 2px #fff2;
+            background: linear-gradient(to top, #f44336 60%, transparent 100%);
+            transition: box-shadow 0.3s, background 0.3s;
+        }
+        .bin.highlight-correct {
+            box-shadow: 0 0 24px 6px #4caf50cc, 0 0 8px 2px #fff2;
+            filter: brightness(1.18) saturate(1.3);
+            transition: box-shadow 0.3s, filter 0.3s;
+        }
+        .bin.highlight-wrong {
+            box-shadow: 0 0 24px 6px #f44336cc, 0 0 8px 2px #fff2;
+            filter: brightness(1.08) saturate(1.2);
+            transition: box-shadow 0.3s, filter 0.3s;
+        }
+
+        .game-tutorial {
+            font-family: 'Roboto Mono', monospace;
+            color: #e8e6e3;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 10px;
+            opacity: 0.85;
+            line-height: 1.5;
+        }
+
+        .recycle-logo {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            color: #4CAF50;
+            text-shadow: 0 2px 8px #0006;
+            filter: drop-shadow(0 0 8px #4caf50aa);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media (min-width: 1600px) {
+            html {
+                background-image: none !important;
+            }
+            .screen {
+                backdrop-filter: none !important;
+                background: rgba(42, 44, 46, 0.95) !important;
+            }
+            .guideline.highlight-correct,
+            .guideline.highlight-wrong,
+            .bin.highlight-correct,
+            .bin.highlight-wrong {
+                box-shadow: none !important;
+                filter: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" src="Sound/1bgmusic.mp3" loop></audio>
+    <audio id="sound-correct" src="Sound/2correct-356013.mp3"></audio>
+    <audio id="sound-wrong" src="Sound/3wrong-38598.mp3"></audio>
+    <audio id="sound-button" src="Sound/4button.mp3"></audio>
+    <audio id="sound-gameover" src="Sound/gameover.wav"></audio>
+
+    <main class="page-wrapper">
+        <div class="main-game-wrapper">
+            <div id="start-screen" class="screen">
+                <div class="recycle-logo" aria-label="Recycle">♻️</div>
+                <h1>Milah Milih Sampah</h1>
+                <p>Arahkan sampah dengan A/D atau ←/→. Percepat dengan S atau ↓. Masukkan ke tong yang benar!</p>
+                <button id="start-button" class="start-button">Mulai</button>
+            </div>
+            <div id="game-over-screen" class="screen hidden">
+                <h1>Game Over</h1>
+                <div class="ui-panel" style="width: 80%"><div class="ui-panel-header"><h3>Skor Akhir</h3></div><div class="ui-panel-body"><div id="final-score-display" class="display">0</div></div></div>
+                <br><br>
+                <button id="restart-button" class="restart-button">Coba Lagi</button>
+            </div>
+            
+            <div class="game-area" id="game-area">
+                <div class="guidelines-container">
+                    <div id="guideline-organik" class="guideline"></div>
+                    <div id="guideline-anorganik" class="guideline"></div>
+                    <div id="guideline-b3" class="guideline"></div>
+                </div>
+                <div id="combo-feedback" class="combo-feedback"></div>
+            </div>
+            <div class="bins-container">
+                <div id="bin-organik" class="bin"><div class="bin-icon">🌿</div><div class="bin-label">Organik</div></div>
+                <div id="bin-anorganik" class="bin"><div class="bin-icon">♻️</div><div class="bin-label">Anorganik</div></div>
+                <div id="bin-b3" class="bin"><div class="bin-icon">☠️</div><div class="bin-label">Beracun</div></div>
+            </div>
+        </div>
+
+        <aside class="sidebar-ui">
+            <div class="ui-panel"><div class="ui-panel-header"><h3>SKOR</h3></div><div class="ui-panel-body"><div id="score-display" class="display">0</div></div></div>
+            <div class="ui-panel"><div class="ui-panel-header"><h3>HIGHSCORE</h3></div><div class="ui-panel-body"><div id="highscore-display" class="display" style="font-size:1.3rem;color:#FFC107;">0</div></div></div>
+            <div class="ui-panel"><div class="ui-panel-header"><h3>NYAWA</h3></div><div class="ui-panel-body"><div id="lives-display" class="display"><span id="lives-container"></span></div></div></div>
+            <div class="ui-panel next-panel"><div class="ui-panel-header"><h3>NEXT</h3></div><div class="ui-panel-body"><div id="next-item-preview" class="display">…</div><div id="next-item-name"></div></div></div>
+            <div class="game-title-static">Milah-Milih</div>
+            <div class="game-tutorial">
+                <span>Kontrol: </span>
+                <span style="color:#FFC107;">&#8592;/&#8594;/A/D</span> geser &nbsp;|&nbsp;
+                <span style="color:#FFC107;">&#8595;/S</span> jatuhkan
+            </div>
+        </aside>
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const gameArea = document.getElementById('game-area');
+        const binsContainer = document.querySelector('.bins-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const livesContainer = document.getElementById('lives-container');
+        const nextItemPreview = document.getElementById('next-item-preview');
+        const nextItemName = document.getElementById('next-item-name');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const finalScoreDisplay = document.getElementById('final-score-display');
+        const bins = Array.from(document.querySelectorAll('.bin'));
+        const bgMusic = document.getElementById('bg-music');
+        const soundCorrect = document.getElementById('sound-correct');
+        const soundWrong = document.getElementById('sound-wrong');
+        const soundButton = document.getElementById('sound-button');
+        const soundGameOver = document.getElementById('sound-gameover');
+        bgMusic.volume = 0.5;
+        soundCorrect.volume = 0.7;
+        soundWrong.volume = 0.7;
+        soundButton.volume = 0.7;
+
+        let score, lives, gameIsOver, gameLoopId, activeWaste = null, nextWaste = null, keys = {};
+        let comboCount = 0;
+        let lastCorrectTime = 0;
+        const comboFeedback = document.getElementById('combo-feedback');
+        let activeAudios = [];
+        let highscore = 0;
+
+        const wasteAssets = [
+            // Organik
+            { emoji: '🍎', type: 'organik', name: 'Sisa Buah' },
+            { emoji: '🍌', type: 'organik', name: 'Kulit Pisang' },
+            { emoji: '🍞', type: 'organik', name: 'Sisa Makanan' },
+            { emoji: '🥬', type: 'organik', name: 'Sayuran' },
+            { emoji: '🦴', type: 'organik', name: 'Tulang' },
+            { emoji: '🍂', type: 'organik', name: 'Daun Kering' },
+            { emoji: '🥕', type: 'organik', name: 'Sisa Sayur' },
+            { emoji: '🍄', type: 'organik', name: 'Jamur Busuk' },
+            { emoji: '🍚', type: 'organik', name: 'Nasi Sisa' },
+            { emoji: '🍉', type: 'organik', name: 'Kulit Semangka' },
+            { emoji: '🥑', type: 'organik', name: 'Kulit Alpukat' },
+            { emoji: '🍋', type: 'organik', name: 'Kulit Jeruk' },
+            { emoji: '🍠', type: 'organik', name: 'Kulit Ubi' },
+            { emoji: '🍗', type: 'organik', name: 'Tulang Ayam' },
+            { emoji: '🍅', type: 'organik', name: 'Sisa Tomat' },
+            { emoji: '📰', type: 'organik', name: 'Koran Bekas' },
+            { emoji: '📦', type: 'organik', name: 'Kardus' },
+            { emoji: '🧻', type: 'organik', name: 'Tisu Kotor' },
+            // Anorganik
+            { emoji: '🍾', type: 'anorganik', name: 'Botol Kaca' },
+            { emoji: '🥫', type: 'anorganik', name: 'Kaleng' },
+            { emoji: '🧴', type: 'anorganik', name: 'Botol Plastik' },
+            { emoji: '💻', type: 'anorganik', name: 'Limbah Elektronik' },
+            { emoji: '🛍️', type: 'anorganik', name: 'Kantong Plastik' },
+            { emoji: '🧃', type: 'anorganik', name: 'Kotak Minuman' },
+            { emoji: '🥤', type: 'anorganik', name: 'Gelas Plastik' },
+            { emoji: '🧷', type: 'anorganik', name: 'Peniti' },
+            { emoji: '🖊️', type: 'anorganik', name: 'Pulpen Habis' },
+            { emoji: '🧲', type: 'anorganik', name: 'Magnet Bekas' },
+            // B3
+            { emoji: '🔋', type: 'b3', name: 'Baterai Bekas' },
+            { emoji: '💉', type: 'b3', name: 'Jarum Suntik' },
+            { emoji: '💊', type: 'b3', name: 'Obat Kadaluarsa' },
+            { emoji: '🧪', type: 'b3', name: 'Cairan Kimia' },
+            { emoji: '💡', type: 'b3', name: 'Lampu Neon' },
+            { emoji: '☣️', type: 'b3', name: 'Limbah Medis' },
+            { emoji: '🧫', type: 'b3', name: 'Sampel Lab' },
+            { emoji: '🧴', type: 'b3', name: 'Botol Pestisida' },
+            { emoji: '🧯', type: 'b3', name: 'Tabung Pemadam' },
+            { emoji: '🩸', type: 'b3', name: 'Kantong Darah' },
+        ];
+        
+        // Komentator benar/salah
+        const benarSoundFiles = [
+            'Sound/benar1.wav',
+            'Sound/benar2.wav',
+            'Sound/benar3.wav',
+            'Sound/benar4.wav',
+            'Sound/benar6.wav',
+            'Sound/benar7.wav',
+            'Sound/benar8.wav',
+        ];
+        const benarRareFile = 'Sound/benar9.mp3';
+        const salahSoundFiles = [
+            'Sound/salah1.wav',
+            'Sound/salah2.wav',
+            'Sound/salah3.wav',
+            'Sound/salah4.wav',
+        ];
+
+        function shuffle(arr) {
+            let a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        let benarQueue = [];
+        let salahQueue = [];
+        function refillBenarQueue() {
+            // benar9.mp3 hanya 1x, yang lain 1x juga, lalu di-shuffle
+            benarQueue = shuffle([...benarSoundFiles, benarRareFile]);
+        }
+        function refillSalahQueue() {
+            salahQueue = shuffle([...salahSoundFiles]);
+        }
+        benarSoundFiles.forEach(f => { const a = new Audio(f); a.volume = 0.8; });
+        const benarRareAudio = new Audio(benarRareFile); benarRareAudio.volume = 0.8;
+        salahSoundFiles.forEach(f => { const a = new Audio(f); a.volume = 0.8; });
+
+        function init() {
+            startButton.addEventListener('click', () => {
+                soundButton.currentTime = 0;
+                soundButton.play().catch(()=>{});
+                startGame();
+            });
+            restartButton.addEventListener('click', () => {
+                soundButton.currentTime = 0;
+                soundButton.play().catch(()=>{});
+                startGame();
+            });
+            window.addEventListener('keydown', e => {
+                keys[e.key.toLowerCase()] = true;
+            });
+            window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+        }
+
+        function loadHighscore() {
+            highscore = parseInt(localStorage.getItem('milahmilih_highscore') || '0', 10);
+            document.getElementById('highscore-display').textContent = highscore;
+        }
+        function saveHighscore(newScore) {
+            if (newScore > highscore) {
+                highscore = newScore;
+                localStorage.setItem('milahmilih_highscore', highscore);
+                document.getElementById('highscore-display').textContent = highscore;
+            }
+        }
+
+        function startGame() {
+            score = 0; lives = 5; gameIsOver = false;
+            activeWaste = null; keys = {}; 
+            gameArea.querySelectorAll('.waste, .feedback-animation').forEach(el => el.remove());
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            nextWaste = generateNewWastePiece();
+            cycleWaste();
+            updateUI();
+            gameLoopId = requestAnimationFrame(gameLoop);
+            bgMusic.currentTime = 0;
+            bgMusic.play().catch(()=>{});
+            loadHighscore();
+        }
+
+        function generateNewWastePiece() {
+            const asset = wasteAssets[Math.floor(Math.random() * wasteAssets.length)];
+            const wasteEl = document.createElement('div');
+            wasteEl.classList.add('waste');
+            wasteEl.textContent = asset.emoji;
+            const gameAreaWidth = gameArea.offsetWidth;
+            const wasteElWidth = 50;
+            const piece = {
+                el: wasteEl, type: asset.type, name: asset.name,
+                x: (gameAreaWidth - wasteElWidth) / 2, y: -50,
+            };
+            piece.el.style.transform = `translate(${piece.x}px, ${piece.y}px)`;
+            return piece;
+        }
+
+        function cycleWaste() {
+            activeWaste = nextWaste;
+            gameArea.appendChild(activeWaste.el);
+            nextWaste = generateNewWastePiece();
+            updateNextPreview();
+        }
+
+        function gameLoop() {
+            if (gameIsOver) return;
+            const fallSpeed = 2 + (score * 0.01);
+            const moveSpeed = 6;
+            if (activeWaste) {
+                activeWaste.y += (keys['s'] || keys['arrowdown']) ? fallSpeed * 4 : fallSpeed;
+                if (keys['a'] || keys['arrowleft']) activeWaste.x -= moveSpeed;
+                if (keys['d'] || keys['arrowright']) activeWaste.x += moveSpeed;
+                activeWaste.x = Math.max(0, Math.min(gameArea.offsetWidth - activeWaste.el.offsetWidth, activeWaste.x));
+                activeWaste.el.style.transform = `translate(${activeWaste.x}px, ${activeWaste.y}px)`;
+                if (activeWaste.el.getBoundingClientRect().bottom >= binsContainer.getBoundingClientRect().top) {
+                    handleLanding();
+                }
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleLanding() {
+            if (!activeWaste) return;
+            const wasteRect = activeWaste.el.getBoundingClientRect();
+            let landedInBin = false;
+            bins.forEach(binEl => {
+                const binRect = binEl.getBoundingClientRect();
+                const wasteCenter = wasteRect.left + (wasteRect.width / 2);
+                if (wasteCenter > binRect.left && wasteCenter < binRect.right) {
+                    const binType = binEl.id.replace('bin-', '');
+                    if (binType === activeWaste.type) {
+                        highlightBinAndLane(binType, true);
+                        handleCombo();
+                        handleCorrect();
+                    } else {
+                        highlightBinAndLane(binType, false);
+                        resetCombo();
+                        handleMistake();
+                    }
+                    landedInBin = true;
+                }
+            });
+            if (!landedInBin) {
+                highlightBinAndLane(null, false);
+                resetCombo();
+                handleMistake();
+            }
+            activeWaste.el.remove();
+            activeWaste = null;
+            if (!gameIsOver) cycleWaste();
+        }
+
+        function highlightBinAndLane(type, isCorrect) {
+            // Remove all highlight
+            ['organik','anorganik','b3'].forEach(t => {
+                document.getElementById('guideline-' + t).classList.remove('highlight-correct','highlight-wrong');
+                document.getElementById('bin-' + t).classList.remove('highlight-correct','highlight-wrong');
+            });
+            if (!type) return;
+            const lane = document.getElementById('guideline-' + type);
+            const bin = document.getElementById('bin-' + type);
+            if (isCorrect) {
+                lane.classList.add('highlight-correct');
+                bin.classList.add('highlight-correct');
+                setTimeout(() => {
+                    lane.classList.remove('highlight-correct');
+                    bin.classList.remove('highlight-correct');
+                }, 600);
+            } else {
+                lane.classList.add('highlight-wrong');
+                bin.classList.add('highlight-wrong');
+                setTimeout(() => {
+                    lane.classList.remove('highlight-wrong');
+                    bin.classList.remove('highlight-wrong');
+                }, 600);
+            }
+        }
+
+        function handleCombo() {
+            const now = Date.now();
+            if (now - lastCorrectTime < 2000) {
+                comboCount++;
+            } else {
+                comboCount = 1;
+            }
+            lastCorrectTime = now;
+            showComboFeedback(comboCount);
+        }
+
+        function resetCombo() {
+            comboCount = 0;
+        }
+
+        function showComboFeedback(count) {
+            let text = '';
+            if (count === 2) text = 'DOUBLE!';
+            else if (count === 3) text = 'TRIPLE!';
+            else if (count === 1) text = 'PERFECT!';
+            else if (count > 3) text = 'x' + count;
+            else text = '';
+            if (text) {
+                comboFeedback.textContent = text;
+                comboFeedback.classList.add('show');
+                setTimeout(() => comboFeedback.classList.remove('show'), 700);
+            }
+        }
+
+        function handleCorrect() {
+            score += 10;
+            soundCorrect.currentTime = 0;
+            soundCorrect.play().catch(()=>{});
+            // Komentator benar: shuffle queue
+            if (benarQueue.length === 0) refillBenarQueue();
+            const file = benarQueue.shift();
+            let sound;
+            if (file === benarRareFile) {
+                sound = benarRareAudio;
+                sound.currentTime = 0;
+                sound.play().catch(()=>{});
+                setTimeout(() => sound.pause(), 5000);
+            } else {
+                sound = new Audio(file);
+                sound.volume = 0.8;
+                sound.currentTime = 0;
+                sound.play().catch(()=>{});
+            }
+            activeAudios.push(sound);
+            createFeedbackAnimation('✨', 'correct-poof', activeWaste.el, true);
+            animateScore();
+            updateUI();
+        }
+        function handleMistake() {
+            lives--;
+            soundWrong.currentTime = 0;
+            soundWrong.play().catch(()=>{});
+            // Komentator salah: shuffle queue
+            if (salahQueue.length === 0) refillSalahQueue();
+            const file = salahQueue.shift();
+            const sound = new Audio(file);
+            sound.volume = 0.8;
+            sound.currentTime = 0;
+            sound.play().catch(()=>{});
+            activeAudios.push(sound);
+            createFeedbackAnimation('💥', 'feedback-animation', activeWaste.el, false);
+            animateLives();
+            updateUI();
+            if (lives <= 0) endGame();
+        }
+        function animateScore() {
+            scoreDisplay.classList.add('score-animate');
+            setTimeout(() => scoreDisplay.classList.remove('score-animate'), 500);
+        }
+        function animateLives() {
+            livesContainer.classList.add('lives-animate');
+            setTimeout(() => livesContainer.classList.remove('lives-animate'), 500);
+        }
+        function createFeedbackAnimation(emoji, className, targetEl, isCorrect) {
+            const feedback = document.createElement('div');
+            feedback.textContent = emoji;
+            feedback.className = className;
+            feedback.style.color = (className === 'correct-poof') ? 'var(--accent-color)' : 'var(--danger-color)';
+            const targetRect = targetEl.getBoundingClientRect();
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            feedback.style.position = 'absolute';
+            feedback.style.left = `${targetRect.left - gameAreaRect.left}px`;
+            feedback.style.top = `${targetRect.top - gameAreaRect.top}px`;
+            feedback.style.zIndex = '50';
+            gameArea.appendChild(feedback);
+            // Partikel efek
+            for (let i = 0; i < 8; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.textContent = isCorrect ? '✨' : '💥';
+                const angle = (Math.PI * 2 * i) / 8;
+                const tx = Math.cos(angle) * 60 + Math.random() * 20 - 10;
+                const ty = Math.sin(angle) * 60 + Math.random() * 20 - 10;
+                p.style.left = `${targetRect.left - gameAreaRect.left + 20}px`;
+                p.style.top = `${targetRect.top - gameAreaRect.top + 20}px`;
+                p.style.setProperty('--tx', `${tx}px`);
+                p.style.setProperty('--ty', `${ty}px`);
+                p.style.color = isCorrect ? 'var(--accent-color)' : 'var(--danger-color)';
+                p.style.opacity = 0.7 + Math.random() * 0.3;
+                gameArea.appendChild(p);
+                setTimeout(() => p.remove(), 700);
+            }
+            setTimeout(() => feedback.remove(), 600);
+        }
+
+        function endGame() {
+            gameIsOver = true;
+            cancelAnimationFrame(gameLoopId);
+            if(activeWaste) activeWaste.el.remove();
+            finalScoreDisplay.textContent = score;
+            gameOverScreen.classList.remove('hidden');
+            // Matikan semua suara selain gameover
+            bgMusic.pause();
+            soundCorrect.pause();
+            soundWrong.pause();
+            soundButton.pause();
+            benarRareAudio.pause && benarRareAudio.pause();
+            // Matikan semua audio benar/salah yang mungkin sedang play
+            document.querySelectorAll('audio').forEach(a => {
+                if (a !== soundGameOver) a.pause();
+            });
+            // Matikan semua audio JS yang aktif
+            activeAudios.forEach(a => { try { a.pause(); a.currentTime = 0; } catch(e){} });
+            activeAudios = [];
+            soundGameOver.currentTime = 0;
+            soundGameOver.play().catch(()=>{});
+            saveHighscore(score);
+        }
+
+        function updateUI() {
+            scoreDisplay.textContent = score;
+            livesContainer.innerHTML = Array(5).fill(null).map((_, i) => i < lives ? '❤️' : '🖤').join('');
+        }
+
+        function updateNextPreview() {
+            if (nextWaste) {
+                nextItemPreview.textContent = nextWaste.el.textContent;
+                nextItemName.textContent = nextWaste.name;
+            } else {
+                nextItemPreview.textContent = '?';
+                nextItemName.textContent = '';
+            }
+        }
+
+        init();
+        // Inisialisasi queue di awal
+        refillBenarQueue();
+        refillSalahQueue();
+    });
+    </script>
+</body>
+</html>
