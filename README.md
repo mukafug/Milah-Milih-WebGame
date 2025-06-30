@@ -8,7 +8,7 @@
 </div>
 
 ## Demo
-You can play the game online at [Milah-Milih Sampah Demo](https://mukafug.github.io/Milah-Milih-WebGame/).
+You can play the game online at [Milah-Milih Sampah Demo](https://milahmilih.pages.dev/).
 
 ## Overview
 Milah-Milih Sampah is an interactive web-based game designed to educate users about waste segregation. Players must sort waste into the correct bins (Organic, Inorganic, and Hazardous) using keyboard controls.
