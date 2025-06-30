@@ -7,6 +7,9 @@
   <img src="Screenshot_2.jpg" alt="Screenshot 2" style="width: 48%; border: 1px solid #ccc; border-radius: 4px;">
 </div>
 
+## Demo
+You can play the game online at [Milah-Milih Sampah Demo](https://mukafug.github.io/Milah-Milih-WebGame/).
+
 ## Overview
 Milah-Milih Sampah is an interactive web-based game designed to educate users about waste segregation. Players must sort waste into the correct bins (Organic, Inorganic, and Hazardous) using keyboard controls.
 
@@ -33,18 +36,16 @@ Milah-Milih Sampah is an interactive web-based game designed to educate users ab
 ## Installation
 1. Clone the repository:
    ```bash
-git clone <repository-url>
-```
-2. Open `index.html` in your browser to start the game.
+   git clone https://github.com/mukafug/Milah-Milih-WebGame.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd Milah-Milih-WebGame
+   ```
+3. Open `index.html` in your browser to start the game.
 
 ## Deployment
 To deploy the game on GitHub Pages:
 1. Push the repository to GitHub.
 2. Go to the repository settings.
 3. Enable GitHub Pages and select the branch containing `index.html`.
-
-## Demo
-You can play the game online at [Milah-Milih Sampah Demo](https://milahmilih.pages.dev/).
-
-## License
-This project is licensed under the MIT License.
